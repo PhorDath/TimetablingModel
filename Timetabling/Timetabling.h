@@ -12,6 +12,7 @@ using namespace std;
 class Timetabling
 {
 private:
+	
 	string directory;
 	string fileName;
 	int cred;
@@ -27,7 +28,8 @@ private:
 	void getData(GRBModel &model);
 	void getCSV(GRBModel &model);
 	void getLatex(GRBModel &model);
-
+	void getInfo(GRBModel &model);
+	
 	// decision variables
 	vector<vector<vector<vector<GRBVar>>>> x;
 
@@ -39,6 +41,9 @@ private:
 	void c4(GRBModel &model);
 
 public:
+	string info;
+	bool feaseble = false;
+
 	Timetabling(string fileName);
 	Timetabling(string directory, string fileName);
 	void model();

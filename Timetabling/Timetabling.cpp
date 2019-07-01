@@ -36,6 +36,7 @@ void Timetabling::model()
 		cout << "Solving Timetabling with input " << fileName << endl;
 		model.optimize();
 
+		getInfo(model);
 		result(model);
 		model.write("teste.sol");
 		getData(model);
@@ -84,8 +85,16 @@ Timetabling::~Timetabling()
 
 void Timetabling::generateInstances(string dir, int P, int T, int D, int H, int q, int cred , float prob)
 {
+	fstream all;
+	all.open(dir + "all.txt", ios::out | ios::app);
+	if (all.is_open() == false) {
+		cout << "Error opening all.txt\n";
+		exit(1);
+	}
+
 	fstream file;
 	string fn = "stt_" + to_string(P) + "_" + to_string(T) + "_" + to_string(D) + "_" + to_string(H) + "_" + to_string(q) + "_" + to_string(cred) + "_" + to_string(int(prob)) + ".txt";
+	all << fn << endl;
 	file.open(dir + fn, ios::out | ios::ate);
 	if (file.is_open() != true) {
 		cout << "Error creating file " + fn << endl;
@@ -121,11 +130,13 @@ void Timetabling::generateInstances(string dir, int P, int T, int D, int H, int 
 		file << endl;
 	}
 	file.close();
+	all.close();
 }
 
 void Timetabling::readInstance()
 {
 	fstream file;
+	cout << directory + fileName << endl;
 	file.open(directory + fileName, ios::in);
 	if (file.is_open() == false) {
 		cout << "Error opening file " << fileName << endl;
@@ -163,17 +174,21 @@ void Timetabling::result(GRBModel & model)
 	int status = model.get(GRB_IntAttr_Status);
 	if (status == GRB_UNBOUNDED) {
 		cout << "O modelo nao pode ser resolvido porque e ilimitado." << endl;
+		feaseble = false;
 	}
 	if (status == GRB_OPTIMAL) {
 		cout << "Solucao otima encontrada!" << endl;
 		cout << "O valor da solucao otima eh: " << model.get(GRB_DoubleAttr_ObjVal) << endl;
+		feaseble = true;
 	}
 	if (status == GRB_TIME_LIMIT) {
 		cout << "Tempo limite!" << endl;
 		cout << "O valor da melhot solucao ate o momento e: " << model.get(GRB_DoubleAttr_ObjVal) << endl;
+		feaseble = true;
 	}
 	if (status == GRB_INFEASIBLE) {
 		cout << "O modelo nao pode ser resolvido porque e inviavel." << endl;
+		feaseble = false;
 	}
 	else {
 		cout << "Status: " << status << endl;
@@ -318,6 +333,15 @@ void Timetabling::getLatex(GRBModel & model)
 	file << "\t\t\\label{tab:sol_" << fileName << "}\n";
 	file << "\t\\end{table}\n";
 	file.close();
+}
+
+void Timetabling::getInfo(GRBModel & model)
+{
+	string ret = "";
+	ret += to_string(model.get(GRB_DoubleAttr_ObjVal)) + " ; ";
+	ret += to_string(model.get(GRB_DoubleAttr_MIPGap) * 100) + " ; ";
+	ret += to_string(model.get(GRB_DoubleAttr_Runtime));
+	info = ret;
 }
 
 void Timetabling::var_x(GRBModel & model)
